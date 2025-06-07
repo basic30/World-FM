@@ -3,12 +3,12 @@
 const CACHE_NAME = 'world-fm-radio-v1';
 // Add the paths to any other essential files like CSS or icons here.
 const URLS_TO_CACHE = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
   // IMPORTANT: Add the paths to your icon files used in the manifest
-  '/images/icon-192x192.png',
-  '/images/icon-512x512.png',
-  '/images/fallback-icon.png'
+  './images/icon-192x192.png',
+  './images/icon-512x512.png',
+  './images/fallback-icon.png'
 ];
 
 // Install the service worker and cache the app shell
