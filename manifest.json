@@ -1,0 +1,23 @@
+
+
+{
+  "name": "World FM Radio",
+  "short_name": "FM Radio",
+  "description": "Listen to thousands of radio stations from around the world.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#0a0a1a",
+  "icons": [
+    {
+      "src": "images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World FM Radio - Complete Tool</title>
+
+    <!-- --- NEW: PWA Manifest Link --- -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0a1a">
+    <link rel="apple-touch-icon" href="images/icon-192x192.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+
+    <style>
+        /* --- Base Variables and Theme Setup (Unchanged) --- */
+        :root {
+            --bg-color-dark: #0a0a1a; --text-color-dark: #e0e0e0; --primary-neon: #00ffff; --secondary-neon: #ff00ff;
+            --container-bg-dark: rgba(10, 10, 30, 0.92); --border-color-dark: var(--primary-neon); --list-bg-dark: rgba(30, 30, 60, 0.85);
+            --list-hover-bg-dark: rgba(50, 50, 90, 0.95); --input-bg-dark: #1a1a3a; --input-border-dark: var(--secondary-neon);
+            --button-bg-dark: var(--primary-neon); --button-text-dark: #000; --scrollbar-thumb-dark: var(--primary-neon);
+            --scrollbar-track-dark: #1a1a3a; --skeleton-bg-dark: rgba(50, 50, 90, 0.5); --skeleton-shine-dark: rgba(70, 70, 110, 0.8);
+            --fav-color-dark: #ffd700; --playing-indicator-dark: var(--primary-neon);
+
+            --bg-color-light: #f0f5f9; --text-color-light: #1a202c; --primary-neon-light: #0056b3; --secondary-neon-light: #c82333;
+            --container-bg-light: rgba(255, 255, 255, 0.96); --border-color-light: var(--primary-neon-light); --list-bg-light: rgba(230, 240, 250, 0.9);
+            --list-hover-bg-light: rgba(200, 220, 240, 1); --input-bg-light: #ffffff; --input-border-light: var(--secondary-neon-light);
+            --button-bg-light: var(--primary-neon-light); --button-text-light: #fff; --scrollbar-thumb-light: var(--primary-neon-light);
+            --scrollbar-track-light: #e0e0e0; --skeleton-bg-light: rgba(200, 220, 240, 0.7); --skeleton-shine-light: rgba(220, 235, 250, 1);
+            --fav-color-light: #e6b800; --playing-indicator-light: var(--primary-neon-light);
+
+            /* Default theme variables */
+            --bg-color: var(--bg-color-dark); --text-color: var(--text-color-dark); --primary-accent: var(--primary-neon); --secondary-accent: var(--secondary-neon);
+            --container-bg: var(--container-bg-dark); --border-color: var(--border-color-dark); --list-bg: var(--list-bg-dark); --list-hover-bg: var(--list-hover-bg-dark);
+            --input-bg: var(--input-bg-dark); --input-border: var(--input-border-dark); --button-bg: var(--button-bg-dark); --button-text: var(--button-text-dark);
+            --scrollbar-thumb: var(--scrollbar-thumb-dark); --scrollbar-track: var(--scrollbar-track-dark); --skeleton-bg: var(--skeleton-bg-dark);
+            --skeleton-shine: var(--skeleton-shine-dark); --fav-color: var(--fav-color-dark); --playing-indicator: var(--playing-indicator-dark);
+            --audio-invert: 1; --audio-hue: 180deg;
+        }
+        body.light-theme {
+            --bg-color: var(--bg-color-light); --text-color: var(--text-color-light); --primary-accent: var(--primary-neon-light); --secondary-accent: var(--secondary-neon-light);
+            --container-bg: var(--container-bg-light); --border-color: var(--border-color-light); --list-bg: var(--list-bg-light); --list-hover-bg: var(--list-hover-bg-light);
+            --input-bg: var(--input-bg-light); --input-border: var(--input-border-light); --button-bg: var(--button-bg-light); --button-text: var(--button-text-light);
+            --scrollbar-thumb: var(--scrollbar-thumb-light); --scrollbar-track: var(--scrollbar-track-light); --skeleton-bg: var(--skeleton-bg-light);
+            --skeleton-shine: var(--skeleton-shine-light); --fav-color: var(--fav-color-light); --playing-indicator: var(--playing-indicator-light);
+            --audio-invert: 0; --audio-hue: 0deg;
+        }
+        /* --- General, Container, Controls (Unchanged) --- */
+        html { scroll-behavior: smooth; box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); background-color: var(--bg-color); transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; }
+        #tsparticles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; display: none; }
+        body.particles-enabled #tsparticles { display: block; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+        .radio-container { width: 90%; max-width: 650px; margin: 30px auto; padding: 20px 25px; background: var(--container-bg); border: 2px solid var(--border-color); border-radius: 15px; box-shadow: 0 0 15px var(--primary-accent), 0 0 25px var(--secondary-accent) inset; color: var(--text-color); backdrop-filter: blur(8px); position: relative; transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
+        .display { font-family: 'Orbitron', 'Courier New', monospace; color: var(--primary-accent); background: rgba(0, 0, 0, 0.6); padding: 10px 15px; margin-bottom: 20px; text-align: center; font-size: 1.1em; border-radius: 8px; border: 1px solid var(--secondary-accent); text-shadow: 0 0 5px var(--primary-accent); min-height: 40px; line-height: 1.4; transition: all 0.3s ease; overflow-wrap: break-word; word-break: break-word; }
+        audio { width: 100%; margin-bottom: 20px; border-radius: 5px; filter: invert(var(--audio-invert, 0)) hue-rotate(var(--audio-hue, 0deg)); transition: filter 0.3s ease; }
+        select, input[type="search"] { width: 100%; padding: 12px; margin-bottom: 15px; font-size: 1em; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: 8px; transition: all 0.3s ease; }
+        select:focus, input[type="search"]:focus { outline: none; box-shadow: 0 0 8px var(--secondary-accent); border-color: var(--primary-accent); }
+        #country-select { cursor: pointer; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--primary-accent) 50%), linear-gradient(135deg, var(--primary-accent) 50%, transparent 50%); background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px); background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+        #search-station { margin-bottom: 10px; }
+
+        /* --- Station List (MODIFIED for Favicon and New Indicator) --- */
+        #station-list { list-style: none; padding: 0; margin: 0 0 20px 0; max-height: 300px; overflow-y: auto; border: 1px solid var(--secondary-accent); border-radius: 8px; scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+        #station-list::-webkit-scrollbar { width: 8px; }
+        #station-list::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 4px;}
+        #station-list::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; border: 2px solid var(--scrollbar-track); }
+        #station-list li { display: flex; align-items: center; padding: 10px 12px; margin: 0; background: var(--list-bg); cursor: pointer; font-size: 0.95em; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease; }
+        body.light-theme #station-list li { border-bottom-color: rgba(0, 0, 0, 0.1); }
+        #station-list li:last-child { border-bottom: none; }
+        #station-list li:hover, #station-list li:focus { background: var(--list-hover-bg); color: var(--primary-accent); text-shadow: 0 0 3px var(--primary-accent); transform: translateX(3px); outline: none; }
+
+        /* --- NEW: Station Favicon Style --- */
+        .station-favicon { width: 28px; height: 28px; border-radius: 4px; margin-right: 10px; object-fit: cover; background-color: rgba(255,255,255,0.1); flex-shrink: 0; }
+        .station-favicon-fallback { display: flex; align-items: center; justify-content: center; font-size: 1.2em; color: var(--secondary-accent); } /* Fallback style */
+
+        .station-name { flex-grow: 1; margin: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .fav-button { background: none; border: none; color: var(--text-color); font-size: 1.3em; padding: 0 8px 0 0; cursor: pointer; transition: color 0.2s ease, transform 0.2s ease; order: 1; } /* Moved to the end */
+        .fav-button:hover { transform: scale(1.2); }
+        .fav-button.is-favorite { color: var(--fav-color); }
+
+        /* --- MODIFIED: Animated Playing Indicator --- */
+        .now-playing-indicator { width: 18px; height: 18px; margin-right: 8px; display: none; align-items: flex-end; justify-content: space-between; }
+        .now-playing-indicator span { width: 25%; height: 100%; background-color: var(--playing-indicator); display: inline-block; animation: sound-wave 1.2s infinite ease-in-out; }
+        .now-playing-indicator span:nth-child(2) { animation-delay: 0.3s; }
+        .now-playing-indicator span:nth-child(3) { animation-delay: 0.6s; }
+        @keyframes sound-wave { 0%, 100% { transform: scaleY(0.1); } 50% { transform: scaleY(1.0); } }
+        #station-list li.is-playing .now-playing-indicator { display: flex; }
+        #station-list li.is-playing { background: var(--list-hover-bg); font-weight: bold; }
+
+        /* --- Unchanged styles for Status, Skeleton, Settings, Footer, Responsive --- */
+        #station-list li.status-message { display: block; font-style: italic; cursor: default; text-align: center; padding: 20px 15px; background: var(--list-bg); color: var(--text-color); opacity: 0.8; border-bottom: none; }
+        #station-list li.status-message:hover { background: var(--list-bg); transform: none; text-shadow: none;}
+        #station-list li.error-message { color: var(--secondary-accent); font-weight: bold;}
+        @keyframes skeletonShine { 0% { background-position: -100px; } 40%, 100% { background-position: 140px; } }
+        .skeleton { background-color: var(--skeleton-bg); border-radius: 4px; cursor: default; position: relative; overflow: hidden; }
+        .skeleton::before { content: ''; position: absolute; top: 0; left: 0; width: 100px; height: 100%; background: linear-gradient(90deg, transparent, var(--skeleton-shine), transparent); animation: skeletonShine 1.5s infinite linear; }
+        #station-list li.skeleton-item { display: block; padding: 12px 15px; background: transparent; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); }
+        #station-list li.skeleton-item .skeleton { margin: 3px 0; height: 1.3em; }
+        .settings-button { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: var(--secondary-accent); font-size: 1.7em; cursor: pointer; padding: 5px; line-height: 1; transition: color 0.3s ease, transform 0.3s ease; z-index: 1001; }
+        .settings-button:hover { color: var(--primary-accent); transform: rotate(90deg); }
+        .settings-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
+        .settings-modal-content { background: var(--container-bg); margin: auto; padding: 25px 30px; border: 1px solid var(--border-color); border-radius: 10px; width: 90%; max-width: 480px; color: var(--text-color); box-shadow: 0 5px 15px rgba(0,0,0,0.4), 0 0 20px var(--secondary-accent); position: relative; max-height: 85vh; overflow-y: auto; }
+        .close-button { color: var(--secondary-accent); position: absolute; top: 10px; right: 15px; font-size: 2em; font-weight: bold; cursor: pointer; line-height: 1; }
+        .close-button:hover, .close-button:focus { color: var(--primary-accent); }
+        .settings-modal h2 { margin-top: 0; color: var(--primary-accent); text-align: center; margin-bottom: 25px; text-shadow: 0 0 5px var(--primary-accent); }
+        .settings-section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--secondary-accent); }
+        .settings-section:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .settings-section h3 { margin-bottom: 10px; color: var(--secondary-accent); font-size: 1.1em; }
+        .settings-section label { margin-right: 10px; display: inline-block; margin-bottom: 8px; }
+        .settings-section input[type="radio"] { margin-right: 5px; accent-color: var(--primary-accent); }
+        .settings-section p { font-size: 0.95em; line-height: 1.5; margin-top: 5px; }
+        .settings-section a { color: var(--primary-accent); text-decoration: none; }
+        .settings-section a:hover { color: var(--secondary-accent); text-shadow: 0 0 5px var(--secondary-accent); }
+        .footer { text-align: center; margin-top: 25px; padding: 10px; font-size: 0.8em; color: var(--text-color); opacity: 0.7; }
+        .footer a { color: var(--primary-accent); text-decoration: none; }
+        .footer a:hover { color: var(--secondary-accent); }
+        @media (max-width: 650px) { .radio-container { width: 95%; margin: 20px auto; padding: 15px 20px; } .display { font-size: 1em; } select, input[type="search"] { padding: 10px; font-size: 0.95em; } #station-list { max-height: 280px; } #station-list li { padding: 12px 10px; font-size: 0.9em; } .fav-button { font-size: 1.4em; padding: 0 0 0 10px;} .now-playing-indicator { width: 16px; height: 16px; } .settings-modal-content { width: 92%; padding: 20px 25px; } }
+        @media (max-width: 450px) { .display { font-size: 0.95em; min-height: 38px; } select, input[type="search"] { padding: 9px; font-size: 0.9em; } #station-list { max-height: 250px; } #station-list li { padding: 10px 8px; } .station-name { font-size: 0.95em; } .fav-button { font-size: 1.3em; padding-left: 8px;} .now-playing-indicator { width: 14px; height: 14px; } .settings-modal-content { padding: 15px 20px; } .settings-modal h2 { font-size: 1.2em; } .settings-section h3 { font-size: 1em; } }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <div id="tsparticles"></div>
+
+    <div class="radio-container">
+        <button class="settings-button" id="settings-btn" aria-label="Open Settings" title="Settings">⚙</button>
+
+        <div class="display" id="radio-display" data-lang-key="initial_display" aria-live="polite">Select a country...</div>
+        <audio id="audio-player" controls aria-label="Radio Player"></audio>
+
+        <label for="country-select" class="sr-only" data-lang-key="select_country_label">Select Source</label>
+        <select id="country-select" aria-label="Select Radio Source (Country or Favorites)">
+            <option value="" data-lang-key="select_country_option">-- Select a Country --</option>
+            <option value="favorites" data-lang-key="favorites_option">⭐ Favorites</option>
+        </select>
+
+        <label for="search-station" class="sr-only" data-lang-key="search_station_label">Search Station</label>
+        <input type="search" id="search-station" placeholder="Search stations..." data-lang-key="search_placeholder" aria-label="Search Stations in Current List" disabled>
+
+        <ul id="station-list" aria-live="polite">
+             <!-- Stations / Skeletons / Status -->
+        </ul>
+    </div>
+
+    <!-- Settings Modal (Unchanged) -->
+    <div id="settings-modal" class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="settings-modal-content">
+            <button class="close-button" id="close-settings-btn" aria-label="Close Settings" title="Close">×</button>
+            <h2 id="settings-title" data-lang-key="settings_title">Settings</h2>
+            <div class="settings-section"> <h3 data-lang-key="language_title">Language</h3> <label class="lang-option"><input type="radio" name="language" value="en" aria-labelledby="lang-en-label"> <span id="lang-en-label">English</span></label> <label class="lang-option"><input type="radio" name="language" value="hi" aria-labelledby="lang-hi-label"> <span id="lang-hi-label">हिन्दी</span></label> </div>
+            <div class="settings-section"> <h3 data-lang-key="theme_title">Theme</h3> <label class="theme-option"><input type="radio" name="theme" value="dark" aria-labelledby="theme-dark-label"> <span id="theme-dark-label" data-lang-key="theme_dark">Dark</span></label> <label class="theme-option"><input type="radio" name="theme" value="light" aria-labelledby="theme-light-label"> <span id="theme-light-label" data-lang-key="theme_light">Light</span></label> </div>
+            <div class="settings-section"> <h3 data-lang-key="particles_title">Background Animation</h3> <label class="particle-option"><input type="radio" name="particles" value="on" aria-labelledby="particles-on-label"> <span id="particles-on-label" data-lang-key="particles_on">On</span></label> <label class="particle-option"><input type="radio" name="particles" value="off" aria-labelledby="particles-off-label"> <span id="particles-off-label" data-lang-key="particles_off">Off</span></label> </div>
+            <div class="settings-section"> <h3 data-lang-key="about_title">About</h3> <p data-lang-key="about_text">Created by Movie Time With AI 🍿.</p> <p><a href="https://youtube.com/@movietimewithai?si=JVINGxUeWPJCTgAJ" target="_blank" rel="noopener noreferrer" data-lang-key="youtube_link_text">Visit our YouTube Channel</a></p> <p style="font-size: 0.8em; opacity: 0.7;" data-lang-key="api_credit">Powered by the Radio Browser API.</p> </div>
+        </div>
+    </div>
+
+     <div class="footer"> <p>World FM Radio - Complete Tool</p> </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Elements Cache (Unchanged) ---
+            const elements = { body: document.body, countrySelect: document.getElementById('country-select'), stationList: document.getElementById('station-list'), audioPlayer: document.getElementById('audio-player'), display: document.getElementById('radio-display'), settingsBtn: document.getElementById('settings-btn'), settingsModal: document.getElementById('settings-modal'), closeSettingsBtn: document.getElementById('close-settings-btn'), themeOptions: document.querySelectorAll('input[name="theme"]'), langOptions: document.querySelectorAll('input[name="language"]'), particleOptions: document.querySelectorAll('input[name="particles"]'), searchStationInput: document.getElementById('search-station'), particleContainer: document.getElementById('tsparticles') };
+
+            // --- State (Unchanged) ---
+            let currentLang = localStorage.getItem('radioLang') || 'en'; let currentTheme = localStorage.getItem('radioTheme') || 'dark'; let particlesEnabled = (localStorage.getItem('radioParticles') || 'on') === 'on'; let currentStations = []; let favoriteStations = JSON.parse(localStorage.getItem('radioFavorites') || '{}'); let currentPlayingStationId = null; let particleInstance = null; let searchTimeout = null;
+
+            // --- UI String Translations (Unchanged) ---
+            const uiStrings = {
+                en: { initial_display: "World FM Radio 📻", select_country_option: "-- Select a Country --", loading_countries: "Loading countries...", error_loading_countries: "Error loading countries list.", loading_stations: "Loading stations...", no_stations: "No stations found.", error_loading_stations: "Error loading stations.", loading_favorites: "Loading favorites...", no_favorites: "No favorite stations yet. Click ★ to add.", error_loading_favorites: "Could not load favorites.", settings_title: "Settings", language_title: "Language", theme_title: "Theme", theme_dark: "Dark", theme_light: "Light", particles_title: "Background Animation", particles_on: "On", particles_off: "Off", about_title: "About", about_text: "Created by Movie Time With AI 🍿.", youtube_link_text: "Visit YouTube Channel", api_credit: "Powered by the Radio Browser API.", search_placeholder: "Search current list...", search_no_results: "No matching stations found.", select_country_label: "Select Source", search_station_label: "Search Station", favorites_option: "⭐ Favorites", playing_error: "Stream error. Might be offline.", stream_loading: "Loading stream..." },
+                hi: { initial_display: "विश्व के FM रेडियो 📻", select_country_option: "-- एक देश चुनें --", loading_countries: "देश लोड हो रहे हैं...", error_loading_countries: "देश सूची लोड करने में त्रुटि।", loading_stations: "स्टेशन लोड हो रहे हैं...", no_stations: "कोई स्टेशन नहीं मिला।", error_loading_stations: "स्टेशन लोड करने में त्रुटि।", loading_favorites: "पसंदीदा लोड हो रहे हैं...", no_favorites: "अभी तक कोई पसंदीदा स्टेशन नहीं। ★ पर क्लिक करके जोड़ें।", error_loading_favorites: "पसंदीदा लोड नहीं कर सका।", settings_title: "सेटिंग्स", language_title: "भाषा", theme_title: "थीम", theme_dark: "डार्क", theme_light: "लाइट", particles_title: "बैकग्राउंड एनिमेशन", particles_on: "चालू", particles_off: "बंद", about_title: "परिचय", about_text: "Movie Time With AI 🍿 द्वारा निर्मित।", youtube_link_text: "यूट्यूब चैनल पर जाएँ", api_credit: "रेडियो ब्राउज़र एपीआई द्वारा संचालित।", search_placeholder: "वर्तमान सूची खोजें...", search_no_results: "कोई मेल खाने वाला स्टेशन नहीं मिला।", select_country_label: "स्रोत चुनें", search_station_label: "स्टेशन खोजें", favorites_option: "⭐ पसंदीदा", playing_error: "स्ट्रीम त्रुटि। ऑफलाइन हो सकता है।", stream_loading: "स्ट्रीम लोड हो रहा है..." }
+            };
+
+            // --- Core Functions (Unchanged unless noted) ---
+            function updateUIText(lang) { document.documentElement.lang = lang; currentLang = lang; localStorage.setItem('radioLang', lang); document.querySelectorAll('[data-lang-key]').forEach(el => { const key = el.getAttribute('data-lang-key'); const translation = uiStrings[lang]?.[key]; if (translation) { if (el.tagName === 'INPUT' && el.type === 'search') el.placeholder = translation; else if (el.tagName === 'OPTION') el.textContent = translation; else if (!el.closest('.settings-section label span')) el.textContent = translation; } }); const currentDisplayKey = elements.display.dataset.langKey; if (currentDisplayKey && uiStrings[lang]?.[currentDisplayKey]) elements.display.textContent = uiStrings[lang][currentDisplayKey]; const currentStatusKey = elements.stationList.querySelector('.status-message')?.dataset.langKey; if (currentStatusKey && uiStrings[lang]?.[currentStatusKey]) elements.stationList.querySelector('.status-message').textContent = uiStrings[lang][currentStatusKey]; elements.searchStationInput.placeholder = uiStrings[lang]?.search_placeholder || uiStrings.en.search_placeholder; }
+            function applyTheme(theme) { elements.body.classList.remove('dark-theme', 'light-theme'); elements.body.classList.add(theme + '-theme'); currentTheme = theme; localStorage.setItem('radioTheme', theme); if (particlesEnabled && particleInstance) loadParticlesConfig(); document.querySelector(`input[name="theme"][value="${theme}"]`).checked = true; document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'light' ? '#f0f5f9' : '#0a0a1a'); }
+            function setParticlesEnabled(enabled) { particlesEnabled = enabled; localStorage.setItem('radioParticles', enabled ? 'on' : 'off'); elements.body.classList.toggle('particles-enabled', enabled); if (enabled && !particleInstance) loadParticlesConfig(); else if (!enabled && particleInstance) { particleInstance.destroy(); particleInstance = null; } document.querySelector(`input[name="particles"][value="${enabled ? 'on' : 'off'}"]`).checked = true; }
+            function setStatusMessage(listElement, messageKey, cssClass = 'status-message') { listElement.innerHTML = ''; const li = document.createElement('li'); li.textContent = uiStrings[currentLang]?.[messageKey] || uiStrings.en[messageKey] || messageKey; li.classList.add('status-message'); if (cssClass !== 'status-message') li.classList.add(cssClass); li.dataset.langKey = messageKey; listElement.appendChild(li); }
+            function showSkeletonLoaders(count = 6) { elements.stationList.innerHTML = ''; for (let i = 0; i < count; i++) { const li = document.createElement('li'); li.classList.add('skeleton-item'); li.setAttribute('aria-hidden', 'true'); li.innerHTML = `<div class="skeleton skeleton-text" style="width: 80%;"></div><div class="skeleton skeleton-text" style="width: 50%;"></div>`; elements.stationList.appendChild(li); } }
+            function saveFavorites() { localStorage.setItem('radioFavorites', JSON.stringify(favoriteStations)); }
+            function toggleFavorite(station, favButton) { const stationId = station.stationuuid; if (favoriteStations[stationId]) { delete favoriteStations[stationId]; favButton.classList.remove('is-favorite'); favButton.setAttribute('aria-pressed', 'false'); favButton.textContent = '☆'; } else { favoriteStations[stationId] = { stationuuid: station.stationuuid, name: station.name, url_resolved: station.url_resolved, favicon: station.favicon || '', countrycode: station.countrycode, codec: station.codec, bitrate: station.bitrate }; favButton.classList.add('is-favorite'); favButton.setAttribute('aria-pressed', 'true'); favButton.textContent = '★'; } saveFavorites(); if (elements.countrySelect.value === 'favorites') { displayStations(Object.values(favoriteStations)); } }
+
+             // --- MODIFIED: `displayStations` now includes favicons and new indicator structure ---
+             function displayStations(stationsToDisplay) {
+                 elements.stationList.innerHTML = '';
+                 if (!stationsToDisplay || stationsToDisplay.length === 0) {
+                     setStatusMessage(elements.stationList, elements.countrySelect.value === 'favorites' ? 'no_favorites' : 'no_stations');
+                     elements.searchStationInput.disabled = true; elements.searchStationInput.value = ''; return;
+                 }
+                 stationsToDisplay.forEach(station => {
+                     if (station && station.stationuuid && station.name && station.url_resolved) {
+                         const li = document.createElement('li');
+                         li.dataset.stationId = station.stationuuid;
+                         li.setAttribute('role', 'button'); li.setAttribute('tabindex', '0');
+                         li.classList.toggle('is-playing', station.stationuuid === currentPlayingStationId);
+
+                         // NEW: Station Favicon
+                         const faviconImg = document.createElement('img');
+                         faviconImg.classList.add('station-favicon');
+                         faviconImg.src = station.favicon || 'images/fallback-icon.png'; // Use a fallback image
+                         faviconImg.alt = ``; // Alt text is decorative here
+                         faviconImg.onerror = function() { this.src = 'images/fallback-icon.png'; }; // Handle broken image links
+
+                         // MODIFIED: Playing Indicator (now a container for animated bars)
+                         const playingIndicator = document.createElement('div');
+                         playingIndicator.classList.add('now-playing-indicator');
+                         playingIndicator.setAttribute('aria-hidden', 'true');
+                         playingIndicator.innerHTML = `<span></span><span></span><span></span>`;
+
+                         const stationNameSpan = document.createElement('span');
+                         stationNameSpan.classList.add('station-name');
+                         stationNameSpan.textContent = station.name;
+                         stationNameSpan.title = `Codec: ${station.codec || 'N/A'}, Bitrate: ${station.bitrate || 'N/A'}kbps. Click to play.`;
+
+                         const favButton = document.createElement('button');
+                         favButton.classList.add('fav-button');
+                         const isFav = !!favoriteStations[station.stationuuid];
+                         favButton.textContent = isFav ? '★' : '☆';
+                         favButton.classList.toggle('is-favorite', isFav);
+                         favButton.setAttribute('aria-label', isFav ? `Remove ${station.name} from favorites` : `Add ${station.name} to favorites`);
+                         favButton.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+                         favButton.title = favButton.getAttribute('aria-label');
+                         favButton.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(station, favButton); });
+
+                         li.appendChild(faviconImg);
+                         li.appendChild(playingIndicator);
+                         li.appendChild(stationNameSpan);
+                         li.appendChild(favButton);
+
+                         li.addEventListener('click', () => playStation(station));
+                         li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playStation(station); } });
+                         elements.stationList.appendChild(li);
+                     } else { console.warn("Skipping invalid station data:", station); }
+                 });
+                 elements.searchStationInput.disabled = false;
+             }
+
+            function filterAndDisplayStations() { const searchTerm = elements.searchStationInput.value.toLowerCase().trim(); const sourceList = (elements.countrySelect.value === 'favorites') ? Object.values(favoriteStations) : currentStations; const filteredStations = sourceList.filter(station => station.name && station.name.toLowerCase().includes(searchTerm)); displayStations(filteredStations); if (filteredStations.length === 0 && sourceList.length > 0 && searchTerm !== '') { setStatusMessage(elements.stationList, 'search_no_results'); elements.searchStationInput.disabled = false; } }
+            function handleSearchInput() { clearTimeout(searchTimeout); searchTimeout = setTimeout(filterAndDisplayStations, 250); }
+
+            // --- NEW: Media Session API Function ---
+            function updateMediaSession(station) {
+                if ('mediaSession' in navigator) {
+                    console.log('Updating Media Session...');
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: station.name,
+                        artist: elements.countrySelect.options[elements.countrySelect.selectedIndex].text,
+                        album: 'World FM Radio',
+                        artwork: [{ src: station.favicon || 'images/icon-192x192.png', sizes: '192x192', type: 'image/png' }]
+                    });
+
+                    navigator.mediaSession.setActionHandler('play', () => elements.audioPlayer.play());
+                    navigator.mediaSession.setActionHandler('pause', () => elements.audioPlayer.pause());
+                    // You can add more handlers like 'stop', 'previoustrack', 'nexttrack' if needed
+                }
+            }
+            function clearMediaSession() {
+                 if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = null;
+                    navigator.mediaSession.playbackState = 'none';
+                 }
+            }
+
+
+             // --- MODIFIED: `playStation` now calls `updateMediaSession` ---
+             function playStation(station) {
+                 const stationId = station.stationuuid;
+                 console.log(`Playing: ${station.name} (${stationId}) - URL: ${station.url_resolved}`);
+                 elements.display.textContent = uiStrings[currentLang]?.stream_loading || uiStrings.en.stream_loading;
+                 elements.display.dataset.langKey = 'stream_loading';
+
+                 const previousPlayingLi = elements.stationList.querySelector('.is-playing');
+                 previousPlayingLi?.classList.remove('is-playing');
+                 const currentLi = elements.stationList.querySelector(`li[data-station-id="${stationId}"]`);
+                 currentLi?.classList.add('is-playing');
+                 currentPlayingStationId = stationId;
+
+                 try {
+                     elements.audioPlayer.src = station.url_resolved;
+                     elements.audioPlayer.play()
+                         .then(() => {
+                             elements.display.textContent = station.name;
+                             elements.display.dataset.langKey = '';
+                             // --- NEW ---
+                             updateMediaSession(station); // Update notification
+                             navigator.mediaSession.playbackState = "playing";
+                         })
+                         .catch(e => {
+                             console.error("Audio Play Error:", e);
+                             elements.display.textContent = `${station.name} - ${uiStrings[currentLang]?.playing_error || uiStrings.en.playing_error}`;
+                             elements.display.dataset.langKey = '';
+                             currentPlayingStationId = null;
+                             currentLi?.classList.remove('is-playing');
+                             clearMediaSession(); // Clear notification on error
+                         });
+                 } catch (e) {
+                     console.error("Error setting audio source:", e);
+                     elements.display.textContent = `Error loading: ${station.name}`;
+                     elements.display.dataset.langKey = '';
+                     currentPlayingStationId = null;
+                     currentLi?.classList.remove('is-playing');
+                     clearMediaSession(); // Clear notification on error
+                 }
+             }
+
+             // --- API Fetch Logic (Unchanged) ---
+            const servers = [ 'https://de2.api.radio-browser.info', 'https://nl1.api.radio-browser.info', 'https://at1.api.radio-browser.info', 'https://fi1.api.radio-browser.info' ];
+             async function fetchWithFallback(path, options = {}) { let lastError = null; const { timeout = 8000 } = options; for (const server of servers) { const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), timeout); const url = `${server}${path}`; console.log(`Trying API: ${url}`); try { const response = await fetch(url, { signal: controller.signal }); clearTimeout(timeoutId); if (response.ok) { const contentType = response.headers.get("content-type"); if (contentType && contentType.includes("application/json")) { console.log(`Success from ${server}`); return await response.json(); } else { console.warn(`Non-JSON response from ${server} for ${path}. CT: ${contentType}`); lastError = new Error(`Invalid content type from ${server}`); } } else { console.warn(`Server ${server} returned status ${response.status} for ${path}`); lastError = new Error(`HTTP ${response.status} from ${server}`); } } catch (error) { clearTimeout(timeoutId); if (error.name === 'AbortError') { console.error(`Request to ${server} timed out.`); lastError = new Error(`Timeout from ${server}`); } else { console.error(`Fetch error from ${server}:`, error); lastError = error; } } } console.error("All API servers failed."); throw lastError || new Error('API Error: All servers failed.'); }
+
+            // --- Event Listeners (Some are modified) ---
+            elements.settingsBtn.addEventListener('click', () => { elements.settingsModal.style.display = 'flex'; });
+            elements.closeSettingsBtn.addEventListener('click', () => { elements.settingsModal.style.display = 'none'; });
+            elements.settingsModal.addEventListener('click', (event) => { if (event.target === elements.settingsModal) elements.settingsModal.style.display = 'none'; });
+            elements.langOptions.forEach(radio => radio.addEventListener('change', (e) => updateUIText(e.target.value)));
+            elements.themeOptions.forEach(radio => radio.addEventListener('change', (e) => applyTheme(e.target.value)));
+            elements.particleOptions.forEach(radio => radio.addEventListener('change', (e) => setParticlesEnabled(e.target.value === 'on')));
+            elements.audioPlayer.addEventListener('volumechange', () => { localStorage.setItem('radioVolume', elements.audioPlayer.volume); });
+            elements.audioPlayer.addEventListener('pause', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused"; });
+            elements.audioPlayer.addEventListener('play', () => { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing"; });
+            elements.audioPlayer.addEventListener('error', (e) => { console.error("Audio Element Error:", e); if (currentPlayingStationId) { const stationName = elements.stationList.querySelector(`li[data-station-id="${currentPlayingStationId}"] .station-name`)?.textContent || "Stream"; elements.display.textContent = `${stationName} - ${uiStrings[currentLang]?.playing_error || uiStrings.en.playing_error}`; elements.display.dataset.langKey = ''; const playingLi = elements.stationList.querySelector('.is-playing'); playingLi?.classList.remove('is-playing'); currentPlayingStationId = null; clearMediaSession(); } });
+            elements.countrySelect.addEventListener('change', async () => { currentStations = []; elements.stationList.innerHTML = ''; elements.searchStationInput.value = ''; elements.searchStationInput.disabled = true; elements.audioPlayer.pause(); elements.audioPlayer.src = ''; currentPlayingStationId = null; clearMediaSession(); const selection = elements.countrySelect.value; if (selection === 'favorites') { elements.display.textContent = uiStrings[currentLang]?.loading_favorites || uiStrings.en.loading_favorites; elements.display.dataset.langKey = 'loading_favorites'; const favsArray = Object.values(favoriteStations); displayStations(favsArray); elements.searchStationInput.disabled = favsArray.length === 0; elements.display.textContent = elements.countrySelect.options[elements.countrySelect.selectedIndex].text; elements.display.dataset.langKey = ''; } else if (selection) { elements.display.textContent = uiStrings[currentLang]?.loading_stations || uiStrings.en.loading_stations; elements.display.dataset.langKey = 'loading_stations'; showSkeletonLoaders(8); try { const stations = await fetchWithFallback(`/json/stations/bycountrycodeexact/${selection}?order=clickcount&reverse=true&limit=200&hidebroken=true`); currentStations = stations || []; displayStations(currentStations); elements.searchStationInput.disabled = currentStations.length === 0; elements.display.textContent = elements.countrySelect.options[elements.countrySelect.selectedIndex].text; elements.display.dataset.langKey = ''; } catch (error) { console.error('Error fetching stations:', error); setStatusMessage(elements.stationList, 'error_loading_stations', 'error-message'); elements.display.textContent = uiStrings[currentLang]?.error_loading_stations || uiStrings.en.error_loading_stations; elements.display.dataset.langKey = 'error_loading_stations'; } } else { elements.display.textContent = uiStrings[currentLang]?.initial_display || uiStrings.en.initial_display; elements.display.dataset.langKey = 'initial_display'; } });
+            elements.searchStationInput.addEventListener('input', handleSearchInput);
+
+            // --- Initialization (Unchanged) ---
+            function initializeApp() {
+                const savedVolume = localStorage.getItem('radioVolume'); if (savedVolume !== null) { elements.audioPlayer.volume = parseFloat(savedVolume); }
+                updateUIText(currentLang); applyTheme(currentTheme); setParticlesEnabled(particlesEnabled);
+                setStatusMessage(elements.stationList, 'loading_countries');
+                fetchWithFallback('/json/countries?hidebroken=true&order=name')
+                    .then(countries => {
+                        if (!countries || countries.length === 0) throw new Error("No countries received");
+                        elements.stationList.innerHTML = '';
+                        elements.display.textContent = uiStrings[currentLang]?.initial_display || uiStrings.en.initial_display;
+                        elements.display.dataset.langKey = 'initial_display';
+                         const selectElement = elements.countrySelect; const favoritesOption = selectElement.querySelector('option[value="favorites"]');
+                        countries.forEach(country => { if (country.stationcount > 0) { const option = document.createElement('option'); option.value = country.iso_3166_1; option.textContent = `${country.name} (${country.stationcount})`; selectElement.insertBefore(option, favoritesOption); } });
+                    })
+                    .catch(error => { console.error('Fatal Error: Could not fetch countries.', error); setStatusMessage(elements.stationList, 'error_loading_countries', 'error-message'); elements.display.textContent = uiStrings[currentLang]?.error_loading_countries || uiStrings.en.error_loading_countries; elements.display.dataset.langKey = 'error_loading_countries'; elements.countrySelect.disabled = true; });
+                if (particlesEnabled) { loadParticlesConfig(); }
+            }
+
+             // --- Particle Config (Unchanged) ---
+             async function loadParticlesConfig() { if (!particlesEnabled) { if (particleInstance) { particleInstance.destroy(); particleInstance = null; } return; } if (particleInstance) { particleInstance.destroy(); particleInstance = null; } const isLightTheme = currentTheme === 'light'; const particleColor = isLightTheme ? "#0056b3" : "#00adb5"; const linkColor = isLightTheme ? "#adb5bd" : "#393e46"; const particleOpacity = isLightTheme ? { min: 0.3, max: 0.8 } : { min: 0.2, max: 0.6 }; const particleCount = window.innerWidth < 768 ? 35 : 50; try { particleInstance = await tsParticles.load("tsparticles", { fpsLimit: 60, interactivity: { events: { onHover: { enable: true, mode: "repulse" }, onClick: { enable: true, mode: "push" }, resize: true, }, modes: { repulse: { distance: 80, duration: 0.4 }, push: { quantity: 2 }, }, }, particles: { color: { value: particleColor }, links: { color: linkColor, distance: 130, enable: true, opacity: 0.2, width: 1, }, collisions: { enable: false }, move: { direction: "none", enable: true, outModes: { default: "bounce" }, random: true, speed: 1, straight: false, }, number: { density: { enable: true, area: 800 }, value: particleCount }, opacity: { value: particleOpacity }, shape: { type: "circle" }, size: { value: { min: 1, max: 3 } }, }, detectRetina: true, }); console.log("Particles loaded/reloaded."); } catch (error) { console.error("Error loading tsParticles:", error); particleInstance = null; } }
+
+            // --- Start the App ---
+            initializeApp();
+
+             // --- NEW: PWA Service Worker Registration ---
+             if ('serviceWorker' in navigator) {
+                 window.addEventListener('load', () => {
+                     navigator.serviceWorker.register('/sw.js')
+                        .then(reg => console.log('Service Worker registered.', reg))
+                        .catch(err => console.log('Service Worker registration failed: ', err));
+                 });
+             }
+
+        }); // End DOMContentLoaded
+    </script>
+
+</body>
+</html>
